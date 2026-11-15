@@ -19,9 +19,10 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/%C3%BCcretsiz-6b7280?style=flat-square" alt="Ücretsiz">
-  <img src="https://img.shields.io/badge/internetsiz%20%C3%A7al%C4%B1%C5%9F%C4%B1r-6b7280?style=flat-square" alt="İnternetsiz çalışır">
-  <img src="https://img.shields.io/badge/telefon%20%C2%B7%20tablet%20%C2%B7%20bilgisayar-6b7280?style=flat-square" alt="Telefon, tablet, bilgisayar">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="gorseller/etiketler-koyu.png">
+    <img src="gorseller/etiketler-acik.png" alt="Ücretsiz · İnternetsiz çalışır · Telefon, tablet, bilgisayar" width="421">
+  </picture>
 </p>
 
 <br>
