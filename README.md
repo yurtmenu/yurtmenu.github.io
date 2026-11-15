@@ -11,7 +11,10 @@
 
 <p align="center">
   <a href="https://yurtmenu.github.io/">
-    <img src="https://img.shields.io/badge/Uygulamay%C4%B1%20a%C3%A7-%E2%86%92-2f3437?style=for-the-badge" alt="Uygulamayı aç" height="36">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="gorseller/dugme-koyu.png">
+      <img src="gorseller/dugme-acik.png" alt="Uygulamayı aç" width="280">
+    </picture>
   </a>
 </p>
 
@@ -38,7 +41,8 @@
 - **Yemeğe dokun** · İçeriğini gör, merak edersen Google'da ara.
 - **Paylaş** · Kahvaltıyı, akşam yemeğini ya da ikisini birden tablo görseli olarak arkadaşlarına gönder.
 - **Geniş ekran** · Tablette ve bilgisayarda kahvaltı, akşam yemeği ve takvim aynı ekranda.
-- **Ayarlar** · Açık / koyu tema, geçmiş günleri aramaya katma, isteğe bağlı alerjen uyarıları.
+- **Ayarlar** · Açık / koyu tema, yazı boyutu, kalorileri gizleme, geçmiş günleri aramaya katma. Buradan uygulamayı arkadaşına da gönderebilirsin.
+- **Alerjenler** · Yemeğe dokununca soluk bir satırda görünür. Hangilerinin görüneceğini ayarlardan seçebilirsin.
 
 ## 📲 Ana ekrana ekle
 
@@ -84,6 +88,13 @@ Hayır. Yurtlarda paylaşılan menü dosyalarından hazırlanan bağımsız bir 
 <summary><b>Kalori ve alerjen bilgileri doğru mu?</b></summary>
 
 Menü dosyasında ne yazıyorsa o gösterilir. Alerjin varsa yemekhanedeki görevliye de danış.
+
+</details>
+
+<details>
+<summary><b>Hakkımda bilgi topluyor mu?</b></summary>
+
+Hayır. Kaç kişinin kullandığı ve hangi bölümlerin açıldığı isimsiz olarak sayılır; çerez kullanılmaz, kim olduğun bilinmez. Menü ve ayarların yalnızca kendi cihazında durur.
 
 </details>
 
