@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-lTPHtPS3BsejUPvsvIeW6TWB7PmLB4JxNF6mPP2hbOQ=' 'sha256-dmbUXq/ZK36cbwqN/3OH+n8xO7zsXPjB+Inkb0XBtYc='; style-src 'unsafe-inline'; img-src 'self' data: blob: https://yurtmenu.goatcounter.com; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>İBB Yurt Menüsü</title>
+<meta name="description" content="İBB öğrenci yurtlarının aylık yemek menüsü: bugünün kahvaltısı ve akşam yemeği, takvim ve yemek arama. Resmi İBB uygulaması değildir.">
+<link rel="canonical" href="https://yurtmenu.github.io/">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Yurt Menü">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F2F3F5" id="themeColor">
+<meta property="og:title" content="İBB Yurt Menüsü">
+<meta property="og:description" content="İBB yurtlarının yemek menüsü, telefonunda derli toplu.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://yurtmenu.github.io/">
+<meta property="og:image" content="https://yurtmenu.github.io/icons/icon-512.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<script>
+try{var t=JSON.parse(localStorage.getItem('yurtmenu.theme'));if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var c=document.documentElement.classList;if(JSON.parse(localStorage.getItem('yurtmenu.bigText')))c.add('big');if(JSON.parse(localStorage.getItem('yurtmenu.kcal'))===false)c.add('no-kcal')}catch(e){}
+</script>
+<style>
+/* Layout: iOS-style single-column app — sticky date header + week strip, stacked meal cards, fixed bottom tab bar */
+:root{
+  --bg:#F2F3F5; --surface:#FFFFFF; --fg:#1C1E22; --muted:#6B6F76; --hair:rgba(28,30,34,.11);
+  --accent:#2A2D33; --accent-soft:#E6E7EA; --on-accent:#FFFFFF;
+  --link:#000080; --link-soft:#E6E6F4; --on-link:#FFFFFF;
+  --warn:#C2352B; --chip:#ECEDEF; --bar:rgba(248,248,250,.88); --scrim:rgba(12,13,15,.55);
+  --shadow:0 8px 30px rgba(20,22,26,.18);
+  /* öğün renkleri: kahvaltı sabah sarısı, akşam yemeği gece mavisi (kart başlık şeridi) */
+  --bf-bg:#FCEFC7; --bf-fg:#6B4A00; --bf-soft:#7D5F14;
+  --dn-bg:#DDE1FA; --dn-fg:#26307A; --dn-soft:#4A55A8;
+  --f-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --f-display:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --gut-l:max(16px, env(safe-area-inset-left, 0px)); --gut-r:max(16px, env(safe-area-inset-right, 0px));
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111214; --surface:#1C1E22; --fg:#EDEEF0; --muted:#9A9DA3; --hair:rgba(237,238,240,.12);
+  --accent:#D4D6DA; --accent-soft:#2A2D33; --on-accent:#111214;
+  --link:#9A9CFF; --link-soft:#23244A; --on-link:#0E0F24;
+  --warn:#FF7D72; --chip:#26282D; --bar:rgba(22,23,26,.88); --shadow:0 8px 30px rgba(0,0,0,.5);
+  --bf-bg:#3A2E0E; --bf-fg:#F5D27A; --bf-soft:#D2B467; --dn-bg:#1F2652; --dn-fg:#BAC2FF; --dn-soft:#9AA3E6; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111214; --surface:#1C1E22; --fg:#EDEEF0; --muted:#9A9DA3; --hair:rgba(237,238,240,.12);
+  --accent:#D4D6DA; --accent-soft:#2A2D33; --on-accent:#111214;
+  --link:#9A9CFF; --link-soft:#23244A; --on-link:#0E0F24;
+  --warn:#FF7D72; --chip:#26282D; --bar:rgba(22,23,26,.88); --shadow:0 8px 30px rgba(0,0,0,.5);
+  --bf-bg:#3A2E0E; --bf-fg:#F5D27A; --bf-soft:#D2B467; --dn-bg:#1F2652; --dn-fg:#BAC2FF; --dn-soft:#9AA3E6; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{background:var(--bg);margin:0}
+body{color:var(--fg);font-family:var(--f-ui);font-size:16px;line-height:1.35;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+a{color:var(--link)}
+button:focus-visible,input:focus-visible,label:focus-within,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:10px}
+.wrap{max-width:560px;margin:0 auto;padding-left:var(--gut-l);padding-right:var(--gut-r)}
+.num{font-variant-numeric:tabular-nums}
+
+/* header */
+.top{position:sticky;top:0;z-index:5;background:var(--bar);-webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);border-bottom:.5px solid var(--hair);padding-top:env(safe-area-inset-top,0px)}
+.top .wrap{padding-block:10px 8px}
+.titlerow{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.titlerow > div:first-child{min-width:0}
+.eyebrow{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.02em}
+h1{font-family:var(--f-display);font-size:32px;line-height:1.1;font-weight:700;margin:2px 0 0;letter-spacing:-.01em;text-wrap:balance}
+.actions{display:flex;gap:8px;align-items:center}
+.pill{font-size:15px;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:6px 12px;border-radius:999px;white-space:nowrap}
+.icon-btn{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--accent);background:var(--accent-soft)}
+.icon-btn svg{width:19px;height:19px}
+
+.week{position:relative;display:grid;grid-template-columns:28px minmax(0,1fr) 28px;align-items:center;gap:2px;margin-top:12px}
+.week .nav{height:44px;display:grid;place-items:center;color:var(--muted);border-radius:10px}
+.week .nav:disabled{opacity:.3}
+.week .nav svg{width:16px;height:16px}
+/* Şerit parmakla gün gün kayar; kaydırmak seçili günü değiştirmez, dokunulan güne geçilir */
+.wtrack{position:relative;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.wtrack::-webkit-scrollbar{display:none}
+.wtrack .day{flex:0 0 calc(100% / 7);scroll-snap-align:start}
+.day{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border-radius:14px;min-height:56px}
+.day .wd{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.day .dn{font-family:var(--f-display);font-size:19px;font-weight:600;width:34px;height:34px;display:grid;place-items:center;border-radius:50%}
+.day.today .dn{color:var(--link)}
+.day.sel .dn{background:var(--fg);color:var(--bg)}
+.day.sel.today .dn{background:var(--link);color:var(--on-link)}
+.day.empty{opacity:.35}
+.wghost{position:absolute;z-index:0;border-radius:50%;pointer-events:none}
+.week.ghosting .day.sel .dn{background:transparent}
+#v-gun{touch-action:pan-y}
+
+/* content */
+main{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+.view{padding-block:16px 8px;display:flex;flex-direction:column;gap:16px}
+.summary{display:flex;flex-wrap:wrap;gap:8px 16px;color:var(--muted);font-size:14px}
+.summary b{color:var(--fg);font-weight:600}
+.notice{background:var(--surface);border-radius:14px;padding:12px 14px;font-size:14px;color:var(--muted);border:.5px solid var(--hair)}
+.notice b{color:var(--fg)}
+
+.meal{background:var(--surface);border-radius:18px;overflow:hidden;box-shadow:0 1px 0 var(--hair)}
+.meal[data-meal="kahvalti"]{--m-bg:var(--bf-bg);--m-fg:var(--bf-fg);--m-soft:var(--bf-soft)}
+.meal[data-meal="aksam"]{--m-bg:var(--dn-bg);--m-fg:var(--dn-fg);--m-soft:var(--dn-soft)}
+.mhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;margin-bottom:4px;background:var(--m-bg,transparent);color:var(--m-fg,var(--fg))}
+.mtitle{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;font-family:var(--f-display);font-size:20px;font-weight:700}
+.mhours{font-family:var(--f-ui);font-size:14px;font-weight:500;color:var(--m-soft,var(--muted))}
+.mkcal{font-size:15px;font-weight:600;color:var(--m-soft,var(--muted));white-space:nowrap}
+.mkcal b{color:var(--m-fg,var(--fg));font-size:17px}
+.meal[data-meal] .ghead{color:var(--m-fg)}
+.group + .group{position:relative;margin-top:4px}
+.group + .group::before{content:"";position:absolute;top:0;left:16px;right:16px;border-top:1px solid var(--hair)}
+.group + .group .ghead{padding-top:12px}
+.ghead{display:flex;justify-content:space-between;padding:8px 16px 4px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+ul.items{list-style:none;margin:0;padding:0 0 4px}
+.item{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 16px;position:relative}
+.item + .item::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:.5px solid var(--hair)}
+.iname{min-width:0;font-size:16px;font-weight:500}
+.item.tap{cursor:pointer}
+.alg-d{overflow:hidden;font-size:12.5px;font-weight:400;color:var(--muted);margin-top:3px}
+.alg-d .gq{color:var(--link);font-weight:600;text-decoration:none;white-space:nowrap}
+.kcal{font-size:15px;font-weight:600;white-space:nowrap;padding-top:1px}
+.kcal small{font-size:12px;color:var(--muted);font-weight:500}
+.nomeal{padding:28px 16px;text-align:center;color:var(--muted)}
+
+/* month tab */
+.card{background:var(--surface);border-radius:18px;padding:14px;box-shadow:0 1px 0 var(--hair)}
+.cal-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.cal-h h2{font-family:var(--f-display);font-size:20px;margin:0}
+.cal-h button{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--accent)}
+.cal-h button:disabled{color:var(--muted);opacity:.35;cursor:default}
+.cal-h svg{width:16px;height:16px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.cal .wh{font-size:11px;font-weight:700;color:var(--muted);padding:4px 0;text-transform:uppercase}
+.cal button{aspect-ratio:1;max-width:100%;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-family:var(--f-display);font-size:17px;font-weight:600}
+.cal button:disabled{opacity:.3;cursor:default}
+.cal button.today{color:var(--link)}
+.cal button.sel{background:var(--accent-soft)}
+
+/* search tab */
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);border-radius:12px;padding:0 12px;box-shadow:0 1px 0 var(--hair)}
+.search svg{width:16px;height:16px;color:var(--muted);flex:none}
+.search input{flex:1;min-width:0;border:0;background:none;font:inherit;font-size:17px;color:var(--fg);padding:12px 0;outline:none}
+.hint{color:var(--muted);font-size:14px;margin:0 2px}
+.hint button{color:var(--link);font-weight:600}
+.groups{background:var(--surface);border-radius:18px;overflow:hidden;box-shadow:0 1px 0 var(--hair)}
+.sg{padding:12px 16px 14px}
+.sg + .sg{border-top:.5px solid var(--hair)}
+.sg h3{font-size:16px;font-weight:600;margin:0}
+.sg .meta{font-size:13px;color:var(--muted);margin-top:1px}
+.dchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.dchip{font-size:13px;font-weight:600;padding:5px 9px;border-radius:8px;background:var(--link-soft);color:var(--link)}
+.dchip.past{background:var(--chip);color:var(--muted)}
+mark{background:var(--link-soft);color:inherit;border-radius:3px;padding:0 1px}
+
+/* settings tab */
+.sec-t{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:0 4px 6px}
+.list{background:var(--surface);border-radius:14px;overflow:hidden}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 16px;position:relative;min-height:48px;width:100%;text-align:left}
+.row + .row::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:.5px solid var(--hair)}
+.row .rl{min-width:0}
+.row .rl small{display:block;color:var(--muted);font-size:13px;margin-top:1px}
+.row .chev{color:var(--muted);font-size:20px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--chip);border-radius:10px;padding:2px;gap:2px;width:100%}
+.seg button{padding:7px 0;border-radius:8px;font-size:14px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.sw{position:relative;width:51px;height:31px;flex:none}
+.sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;z-index:1}
+.sw span{position:absolute;inset:0;border-radius:999px;background:var(--chip);transition:background .2s}
+.sw span::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2);transition:transform .2s}
+.sw input:checked + span{background:var(--accent)}
+.sw.warn input:checked + span{background:var(--warn)}
+.sw input:checked + span::after{transform:translateX(20px)}
+.fine{font-size:13px;color:var(--muted);margin:8px 4px 0}
+.seg.inl{width:min(216px,62%);flex:none}
+.seg.two{grid-template-columns:repeat(2,1fr)}
+.row .rv{color:var(--muted);text-align:right;font-size:15px}
+a.row{color:inherit;text-decoration:none}
+.list > details.fold{border-radius:0;position:relative}
+.list > details.fold::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:.5px solid var(--hair)}
+.list > details.fold .list{border-radius:0}
+.list > details.fold .fine{margin:8px 16px 12px}
+/* tercihler: büyük yazı (sadece menü kartları), kalorileri gizle */
+.big .iname{font-size:18.5px}
+.big .kcal{font-size:17px}
+.big .kcal small{font-size:13.5px}
+.big .alg-d{font-size:14px}
+.big .mtitle{font-size:23px}
+.big .mhours{font-size:15.5px}
+.big .mkcal{font-size:17px}
+.big .mkcal b{font-size:19.5px}
+.no-kcal .kcal,.no-kcal .mkcal,.no-kcal .ghead .num{display:none}
+details.fold{background:var(--surface);border-radius:14px;overflow:hidden}
+details.fold summary{list-style:none;cursor:pointer;padding:13px 16px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:15px}
+details.fold summary::-webkit-details-marker{display:none}
+details.fold summary::after{content:"›";font-size:20px;line-height:1;transition:transform .2s}
+details.fold[open] summary::after{transform:rotate(90deg)}
+details.fold .list{border-top:.5px solid var(--hair);border-radius:0}
+details.fold .fine{margin:8px 16px 14px}
+
+/* tab bar */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bar);-webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);border-top:.5px solid var(--hair);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.tabs .wrap{display:grid;grid-template-columns:repeat(4,1fr)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0 6px;font-size:11px;font-weight:600;color:var(--muted)}
+.tab svg{width:25px;height:25px}
+.tab[aria-selected="true"]{color:var(--accent)}
+
+/* floating card above the tab bar: install guide */
+.float{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:8;padding-left:var(--gut-l);padding-right:var(--gut-r);pointer-events:none}
+.float > div{max-width:528px;margin:0 auto 10px;background:var(--surface);border-radius:18px;box-shadow:var(--shadow);border:.5px solid var(--hair);pointer-events:auto}
+.inst{padding:16px 16px 12px;display:flex;flex-direction:column;gap:10px}
+.inst-h{display:flex;gap:12px;align-items:center}
+.inst-h img{width:44px;height:44px;border-radius:11px;flex:none}
+.inst-h b{font-size:16px;display:block}
+.inst-h span{font-size:13px;color:var(--muted)}
+.inst ol{margin:0;padding-left:22px;font-size:15px;display:flex;flex-direction:column;gap:6px}
+.inst ol svg{width:17px;height:17px;vertical-align:-3px;color:var(--accent)}
+.inst-a{display:flex;justify-content:flex-end;gap:8px;align-items:center}
+.inst-a .later{color:var(--muted);font-weight:600;font-size:15px;padding:8px 10px}
+.inst-a .go{background:var(--accent);color:var(--on-accent);font-weight:600;font-size:15px;padding:9px 16px;border-radius:12px;text-decoration:none}
+/* Ayarlar › Sürüm satırındaki "güncellemeleri denetle" tuşu */
+.rv.ver{display:flex;align-items:center;gap:10px}
+#updBtn{width:32px;height:32px;margin:-6px -6px -6px 0;border-radius:50%;display:grid;place-items:center;color:var(--accent);background:var(--accent-soft)}
+#updBtn svg{width:17px;height:17px}
+#updBtn.spin svg{animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* share sheet fallback */
+.sheet{position:fixed;inset:0;z-index:30;background:var(--scrim);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:calc(16px + env(safe-area-inset-top,0px)) var(--gut-r) calc(16px + env(safe-area-inset-bottom,0px)) var(--gut-l)}
+.sheet img{max-width:100%;max-height:72vh;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.35);-webkit-touch-callout:default}
+.sheet p{color:#fff;font-size:14px;margin:0;text-align:center}
+.sheet .row2{display:flex;gap:10px}
+.pick{width:100%;max-width:340px;background:var(--surface);border-radius:18px;box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:8px}
+.pick b{font-family:var(--f-display);font-size:18px;text-align:center;margin-bottom:4px}
+.pick button{background:var(--accent-soft);color:var(--fg);font-weight:600;font-size:16px;padding:13px;border-radius:12px}
+.pick button.cancel{background:none;color:var(--muted);padding:8px}
+.sheet .row2 a,.sheet .row2 button{background:#fff;color:#111;font-weight:600;padding:10px 18px;border-radius:12px;text-decoration:none;font-size:15px}
+
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;z-index:50;max-width:calc(100% - 32px);text-align:center}
+.loading{padding:60px 0;text-align:center;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* Geniş ekran (bilgisayar, yatay tablet): kahvaltı | akşam yemeği (menü + salatbar yan yana) | takvim */
+.tblock{display:flex;align-items:center;gap:6px}
+.wide-only,.modal-bg,.mclose{display:none}
+@media (min-width:1000px){
+  .wrap{max-width:1240px;--gut-l:max(24px, env(safe-area-inset-left, 0px));--gut-r:max(24px, env(safe-area-inset-right, 0px))}
+  .wide-only{display:flex}
+  .tabs,.week{display:none!important}
+  .top .wrap{padding-block:14px}
+  .titlerow{align-items:center}
+  .tblock{gap:10px}
+  .dstep{width:36px;height:36px;border-radius:50%;place-items:center;display:grid;color:var(--muted)}
+  .dstep:hover:not(:disabled){background:var(--chip);color:var(--fg)}
+  .dstep:disabled{opacity:.3;cursor:default}
+  .dstep svg{width:16px;height:16px}
+  .icon-btn.wide-only{display:grid}
+  .actions{gap:10px}
+  .hsearch{align-items:center;gap:8px;background:var(--surface);border-radius:999px;padding:0 14px;width:260px;box-shadow:0 0 0 .5px var(--hair)}
+  .hsearch svg{width:15px;height:15px;color:var(--muted);flex:none}
+  .hsearch input{flex:1;min-width:0;border:0;background:none;font:inherit;font-size:15px;color:var(--fg);padding:8px 0;outline:none}
+  main{padding-bottom:32px}
+  main > .wrap{display:grid;grid-template-columns:minmax(0,1fr) min(300px,24vw);gap:20px;align-items:start}
+  #v-gun,#v-ara{grid-column:1;grid-row:1}
+  #v-ay{grid-column:2;grid-row:1}
+  #v-ay .hint{display:none}
+  #v-gun{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.8fr);align-items:start;gap:16px}
+  #v-gun > :not(.meal){grid-column:1/-1}
+  .mgroups.g2{display:grid;grid-template-columns:1fr 1fr}
+  .mgroups.g2 .group + .group{margin-top:0;border-left:1px solid var(--hair)}
+  .mgroups.g2 .group + .group::before{display:none}
+  .mgroups.g2 .group + .group .ghead{padding-top:0}
+  .mgroups.g2 .item + .item::before{right:16px}
+  .float{bottom:16px}
+  .toast{bottom:32px}
+  .modal-bg{display:block;position:fixed;inset:0;z-index:39;background:var(--scrim)}
+  .modal-bg[hidden]{display:none}
+  #v-ayar{position:fixed;z-index:40;left:50%;top:50%;transform:translate(-50%,-50%);width:min(520px,calc((100vw - 32px) / var(--z,1)));max-height:calc(86vh / var(--z,1));overflow:auto;background:var(--bg);border-radius:20px;padding:18px 20px 22px;box-shadow:var(--shadow)}
+  .mclose{display:flex;justify-content:space-between;align-items:center}
+  .mclose b{font-family:var(--f-display);font-size:22px}
+  .mclose button{color:var(--fg);font-weight:600;background:var(--accent-soft);padding:6px 14px;border-radius:999px;font-size:14px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="titlerow">
+      <div class="tblock">
+        <button class="dstep wide-only" data-step="-1" aria-label="Önceki gün"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3 5 8l5 5"/></svg></button>
+        <div><div class="eyebrow" id="eyebrow">Yükleniyor</div><h1 id="h1">Yurt Menüsü</h1></div>
+        <button class="dstep wide-only" data-step="1" aria-label="Sonraki gün"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
+      </div>
+      <div class="actions">
+        <label class="hsearch wide-only" for="hq"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="7" cy="7" r="4.8"/><path d="m10.6 10.6 3.4 3.4"/></svg><input id="hq" type="search" placeholder="Yemek ara…" autocomplete="off" aria-label="Yemek ara"></label>
+        <button class="pill" id="todayBtn" hidden>Bugün</button>
+        <button class="icon-btn" id="shareBtn" hidden aria-label="Bu günün menüsünü görsel olarak paylaş">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12.5V2.5M6.5 6 10 2.5 13.5 6"/><path d="M6.5 9H5a1.5 1.5 0 0 0-1.5 1.5v6A1.5 1.5 0 0 0 5 18h10a1.5 1.5 0 0 0 1.5-1.5v-6A1.5 1.5 0 0 0 15 9h-1.5"/></svg>
+        </button>
+        <button class="icon-btn wide-only" id="setBtn" aria-label="Ayarlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></svg></button>
+      </div>
+    </div>
+    <div class="week" id="week" hidden></div>
+  </div>
+</header>
+
+<main><div class="wrap">
+  <section class="view" id="v-gun"><div class="loading">Menü yükleniyor…</div></section>
+  <section class="view" id="v-ay" hidden></section>
+  <section class="view" id="v-ara" hidden></section>
+  <section class="view" id="v-ayar" hidden></section>
+</div></main>
+<div class="modal-bg" id="modalBg" hidden></div>
+
+<nav class="tabs" role="tablist"><div class="wrap">
+  <button class="tab" role="tab" data-tab="gun" aria-selected="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16a8 8 0 0 1-16 0Z"/><path d="M9 3c-1 1.2 1 2.3 0 3.5M13 3c-1 1.2 1 2.3 0 3.5"/><path d="M8 21h8"/></svg>Gün</button>
+  <button class="tab" role="tab" data-tab="ay" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Ay</button>
+  <button class="tab" role="tab" data-tab="ara" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>Ara</button>
+  <button class="tab" role="tab" data-tab="ayar" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></svg>Ayarlar</button>
+</div></nav>
+<div class="float" id="float"><div id="install" hidden></div></div>
+<div class="toast" id="toast" hidden></div>
+<div class="sheet" id="sheet" hidden></div>
+
+<script>
+// Kod kendi alanında: tarayıcı eklentilerinin sayfaya eklediği global adlarla (ör. S) çakışmasın.
+(() => {
+const APP_VERSION = '60a43f5'; // iç parmak izi: telefonlar yeni sürümü bundan tanır
+// Ekranda görünen ad, ör. "4.12 · 17 Kasım" (derlemede git geçmişinden doldurulur)
+const VERSION_NAME = '4.20', VERSION_DATE = '2026-11-19';
+const ALG = {1:'Gluten',2:'Kabuklu deniz ürünü',3:'Yumurta',4:'Süt',5:'Balık',6:'Hardal',7:'Yer fıstığı',8:'Soya',9:'Kereviz',10:'Acı bakla',11:'Sert kabuklu yemiş',12:'Sülfit',13:'Yumuşakça',14:'Susam'};
+const ALG_SHORT = {...ALG,2:'Kabuklu',11:'Kuruyemiş'};
+const store = {
+  get(k){try{const v=localStorage.getItem('yurtmenu.'+k);return v?JSON.parse(v):null}catch(e){return null}},
+  set(k,v){try{localStorage.setItem('yurtmenu.'+k,JSON.stringify(v));return true}catch(e){return false}},
+  del(k){try{localStorage.removeItem('yurtmenu.'+k)}catch(e){}},
+};
+store.del('archive'); // v2'de telefona yüklenen menüler artık kullanılmıyor
+
+/* ---------- kullanım sayacı (GoatCounter) ---------- */
+// Pano: https://yurtmenu.goatcounter.com — çerez yok, kişiyi tanıyan bilgi gönderilmez.
+// Sahibin cihazı: siteyi bir kez sonuna #saymabeni ekleyerek aç (geri almak için #sayyine).
+if(location.hash === '#saymabeni' || location.hash === '#sayyine'){
+  location.hash === '#saymabeni' ? store.set('saymabeni', true) : store.del('saymabeni');
+  history.replaceState(null, '', location.pathname + location.search);
+}
+const LOCAL = !/^https?:$/.test(location.protocol) || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+const sayimlar = window.__sayimlar = []; // yerelde denerken gönderilmez, buraya yazılır
+function say(path, event = true, title = ''){
+  try{
+    sayimlar.push(path);
+    if(LOCAL || store.get('saymabeni')) return;
+    const q = {p: path, e: event, t: title || path, s: [screen.width, screen.height, devicePixelRatio || 1].join(','), rnd: Math.random().toString(36).slice(2)};
+    if(!event && document.referrer && !document.referrer.startsWith(location.origin)) q.r = document.referrer; // yenileme kendi sitesini "geliş yeri" yazmasın
+    new Image().src = 'https://yurtmenu.goatcounter.com/count?' + new URLSearchParams(q);
+  }catch(e){}
+}
+
+/* ---------- hareket ---------- */
+// Kısa geçişler. Telefonda "hareketi azalt" açıksa hiçbiri çalışmaz.
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)');
+const WIDE = matchMedia('(min-width: 1000px)'); // CSS'teki geniş ekran eşiğiyle aynı
+const EASE = 'cubic-bezier(.2,.8,.2,1)';
+function anim(el, frames, o = {}){ if(!el || REDUCED.matches || !el.animate) return null; return el.animate(frames, {duration: 240, easing: EASE, ...o}); }
+function stopAnims(el){ if(el && el.getAnimations) el.getAnimations().forEach(a => a.cancel()); }
+function rise(el, base = ''){ stopAnims(el); anim(el, [{opacity: 0, transform: `${base} translateY(14px)`}, {opacity: 1, transform: `${base} translateY(0)`}], {duration: 260}); }
+function hideAnimated(el, base = ''){
+  if(el.hidden) return;
+  stopAnims(el);
+  const a = anim(el, [{opacity: 1, transform: `${base} translateY(0)`}, {opacity: 0, transform: `${base} translateY(10px)`}], {duration: 160, easing: 'ease-in'});
+  if(!a){ el.hidden = true; return; }
+  a.finished.then(() => { el.hidden = true; }, () => {});
+}
+
+/* ---------- durum ---------- */
+const S = {
+  data: null, sel: null, tab: 'gun', month: null, q: '', today: null,
+  algOff: new Set(store.get('algHidden') || []), // dokununca açılan satırda gösterilmeyecek alerjenler
+  pastInSearch: !!store.get('pastInSearch'),
+  theme: store.get('theme') || 'system',
+  big: !!store.get('bigText'),
+  kcal: store.get('kcal') !== false,
+  nextMeal: store.get('nextMeal') !== false, // yemek saati geçtiyse sonraki öğünü göster
+  follow: true, // seçili gün saate göre kendiliğinden mi seçildi (kullanıcı başka güne geçince false)
+};
+const SITE = 'https://yurtmenu.github.io/', GITHUB = 'https://github.com/yurtmenu/yurtmenu.github.io';
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2,'0');
+const ymd = (y,m,d) => `${y}-${pad(m)}-${pad(d)}`;
+const lowerTR = s => s.toLocaleLowerCase('tr-TR');
+const fold = s => lowerTR(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/ı/g,'i');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const toDate = k => { const [y,m,d] = k.split('-').map(Number); return new Date(y, m-1, d); };
+const keyOf = d => ymd(d.getFullYear(), d.getMonth()+1, d.getDate());
+const todayKey = () => keyOf(new Date());
+const addDays = (k, n) => { const d = toDate(k); d.setDate(d.getDate()+n); return keyOf(d); };
+const fmt = (k, o) => toDate(k).toLocaleDateString('tr-TR', o);
+const cap = s => s.replace(/^\p{L}/u, c => c.toLocaleUpperCase('tr-TR'));
+const monthName = mo => cap(fmt(mo + '-01', {month:'long', year:'numeric'}));
+// Yemekhane saatleri: kahvaltı hafta sonu bir saat geç.
+const isWeekend = k => [0, 6].includes(toDate(k).getDay());
+const breakfastEnd = k => isWeekend(k) ? 11 : 10;
+const DINNER_END = 21;
+function mealHours(key, k){
+  if(key === 'kahvalti') return isWeekend(k) ? '08:00–11:00' : '07:00–10:00';
+  if(key === 'aksam') return '18:00–21:00';
+  return '';
+}
+function versionLabel(){
+  if(VERSION_NAME.startsWith('__')) return APP_VERSION; // derlenmemiş dosya
+  if(!/^\d{4}-\d\d-\d\d$/.test(VERSION_DATE)) return VERSION_NAME;
+  const sameYear = VERSION_DATE.startsWith(String(new Date().getFullYear()));
+  return VERSION_NAME + ' · ' + fmt(VERSION_DATE, sameYear ? {day:'numeric', month:'long'} : {day:'numeric', month:'long', year:'numeric'});
+}
+const kfmt = n => n == null ? '' : n.toLocaleString('tr-TR');
+const months = () => [...new Set(S.data.keys.map(k => k.slice(0,7)))];
+
+function nearestKey(k){
+  const ks = S.data.keys;
+  if(S.data.days[k]) return k;
+  if(k < ks[0]) return ks[0];
+  if(k > ks[ks.length-1]) return ks[ks.length-1];
+  return ks.find(x => x > k) || ks[ks.length-1];
+}
+
+/* ---------- tema ---------- */
+function applyTheme(){
+  const root = document.documentElement;
+  if(S.theme === 'light' || S.theme === 'dark') root.setAttribute('data-theme', S.theme); else root.removeAttribute('data-theme');
+  requestAnimationFrame(() => { $('themeColor').setAttribute('content', getComputedStyle(root).getPropertyValue('--bg').trim()); });
+}
+function applyPrefs(){
+  const c = document.documentElement.classList;
+  c.toggle('big', S.big); c.toggle('no-kcal', !S.kcal);
+}
+const mq = matchMedia('(prefers-color-scheme: dark)');
+if(mq.addEventListener) mq.addEventListener('change', applyTheme);
+
+/* ---------- başlık ---------- */
+function renderHeader(){
+  const t = S.today, k = S.sel, wide = WIDE.matches;
+  $('week').hidden = S.tab !== 'gun';
+  $('todayBtn').hidden = !((S.tab === 'gun' || wide) && k !== t && S.data.days[t]);
+  $('shareBtn').hidden = !(S.tab === 'gun' && S.data.days[k]);
+  if(wide){
+    document.querySelectorAll('[data-step]').forEach(b => { b.disabled = !neighbor(+b.dataset.step); });
+    if($('hq') !== document.activeElement) $('hq').value = S.q;
+  }
+  // Geniş ekranda başlık her zaman seçili günü gösterir (takvim ve arama yanda/altta)
+  if(S.tab === 'gun' || wide){
+    const near = k === t || k === addDays(t,1) || k === addDays(t,-1);
+    $('eyebrow').textContent = fmt(k, near ? {weekday:'long', day:'numeric', month:'long'} : {day:'numeric', month:'long', year:'numeric'});
+    $('h1').textContent = k === t ? 'Bugün' : k === addDays(t,1) ? 'Yarın' : k === addDays(t,-1) ? 'Dün' : cap(fmt(k,{weekday:'long'}));
+    renderWeek();
+  } else if(S.tab === 'ay'){
+    const n = months().length;
+    $('eyebrow').textContent = n > 1 ? `${n} aylık menü` : 'Menü takvimi';
+    $('h1').textContent = monthName(S.month);
+  } else if(S.tab === 'ara'){
+    $('eyebrow').textContent = S.pastInSearch ? 'Tüm aylarda' : 'Bugünden sonrası';
+    $('h1').textContent = 'Yemek ara';
+  } else {
+    $('eyebrow').textContent = 'Yurt Menüsü';
+    $('h1').textContent = 'Ayarlar';
+  }
+}
+const weekMon = k => addDays(k, -((toDate(k).getDay() + 6) % 7));
+// Şerit menüdeki tüm günleri (tam haftalar halinde) tek sırada tutar; ekranda 7 gün görünür.
+let weekSig = '', weekReveal = 'instant';
+function renderWeek(){
+  const wk = $('week'), t = S.today, ks = S.data.keys;
+  const a = weekMon(ks[0]), b = addDays(weekMon(ks[ks.length-1]), 6), sig = a + b + t;
+  let tr = $('wtrack');
+  if(!tr || sig !== weekSig){
+    weekSig = sig;
+    const chev = dir => `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="${dir < 0 ? 'M10 3 5 8l5 5' : 'M6 3l5 5-5 5'}"/></svg>`;
+    let h = `<button class="nav" data-wk="-1" aria-label="Önceki günler">${chev(-1)}</button><div class="wtrack" id="wtrack">`;
+    for(let k = a; k <= b; k = addDays(k, 1)){
+      const has = !!S.data.days[k];
+      h += `<button class="day${k===t?' today':''}${has?'':' empty'}" data-k="${k}" ${has?'':'disabled'} aria-label="${fmt(k,{weekday:'long',day:'numeric',month:'long'})}"><span class="wd">${fmt(k,{weekday:'short'}).slice(0,3)}</span><span class="dn num">${toDate(k).getDate()}</span></button>`;
+    }
+    h += `</div><button class="nav" data-wk="1" aria-label="Sonraki günler">${chev(1)}</button>`;
+    wk.innerHTML = h; tr = $('wtrack');
+    tr.addEventListener('scroll', updWeekNav, {passive: true});
+  }
+  wk.classList.remove('ghosting'); tr.querySelectorAll('.wghost').forEach(g => g.remove());
+  tr.querySelectorAll('.day.sel').forEach(d => d.classList.remove('sel'));
+  const sd = tr.querySelector(`.day[data-k="${S.sel}"]`); if(sd) sd.classList.add('sel');
+  // Seçili gün görünmüyorsa şerit o günün haftasına kayar
+  if(!dayVisible(S.sel)) weekScrollTo(dayIndex(weekMon(S.sel)), weekReveal);
+  updWeekNav();
+}
+const dayW = () => { const tr = $('wtrack'); return tr ? tr.clientWidth / 7 : 0; };
+const dayIndex = k => Math.round((toDate(k) - toDate(weekSig.slice(0, 10))) / 864e5);
+function dayVisible(k){
+  const tr = $('wtrack'), w = dayW(); if(!tr || !w) return true;
+  const x = dayIndex(k) * w;
+  return x >= tr.scrollLeft - 1 && x + w <= tr.scrollLeft + tr.clientWidth + 1;
+}
+let weekTarget = null, weekTargetT = 0;
+function weekScrollTo(i, behavior){
+  const tr = $('wtrack'), w = dayW(); if(!tr || !w) return;
+  const max = Math.round((tr.scrollWidth - tr.clientWidth) / w);
+  i = Math.max(0, Math.min(max, i));
+  weekTarget = i; weekTargetT = performance.now();
+  tr.scrollTo({left: i * w, behavior: REDUCED.matches ? 'instant' : behavior});
+}
+// Oklar seçili günü değiştirmez, şeridi iki gün kaydırır (art arda basınca hedef birikir)
+function weekNudge(dir){
+  const tr = $('wtrack'), w = dayW(); if(!tr || !w) return;
+  const base = weekTarget != null && performance.now() - weekTargetT < 450 ? weekTarget : Math.round(tr.scrollLeft / w);
+  weekScrollTo(base + 2 * dir, 'smooth');
+}
+function updWeekNav(){
+  const tr = $('wtrack'), wk = $('week'); if(!tr) return;
+  const p = wk.querySelector('[data-wk="-1"]'), n = wk.querySelector('[data-wk="1"]');
+  if(p) p.disabled = tr.scrollLeft <= 1;
+  if(n) n.disabled = tr.scrollLeft + tr.clientWidth >= tr.scrollWidth - 1;
+}
+
+/* ---------- Gün ---------- */
+function itemHTML(it){
+  const shown = it.alg.filter(a => !S.algOff.has(a));
+  const alg = shown.length ? `İçerebilir: ${shown.map(a => esc(ALG_SHORT[a] || a)).join(', ')} · ` : '';
+  const gq = `<a class="gq" href="https://www.google.com/search?tbm=isch&amp;q=${encodeURIComponent(it.name)}" target="_blank" rel="noopener">Google'da ara</a>`;
+  const detail = `<div class="alg-d" hidden>${alg}${gq}</div>`;
+  return `<li class="item tap"><div class="iname">${esc(it.name)}${detail}</div>${it.kcal!=null?`<div class="kcal num">${kfmt(it.kcal)}<small> kcal</small></div>`:''}</li>`;
+}
+function renderDay(){
+  const v = $('v-gun'), k = S.sel, day = S.data.days[k], t = S.today;
+  let h = '';
+  if(!S.data.days[t] && t > S.data.keys[S.data.keys.length-1]){
+    h += `<div class="notice"><b>${esc(monthName(t.slice(0,7)))}</b> menüsü henüz eklenmedi. Yurt yeni menüyü paylaşınca burada kendiliğinden görünecek.</div>`;
+  }
+  if(!day){ v.innerHTML = h + `<div class="meal"><div class="nomeal">Bu gün için menü yok.</div></div>`; return; }
+  for(const m of S.data.meals){
+    const meal = day[m.key]; if(!meal) continue;
+    const main = meal.groups[0];
+    const hrs = mealHours(m.key, k);
+    h += `<article class="meal" data-meal="${m.key}"><div class="mhead"><div class="mtitle">${esc(meal.label)}${hrs ? `<span class="mhours num">${hrs}</span>` : ''}</div>${main.total!=null?`<div class="mkcal num"><b>${kfmt(main.total)}</b> kcal</div>`:''}</div>`;
+    h += `<div class="mgroups${meal.groups.length === 2 ? ' g2' : ''}">`;
+    meal.groups.forEach((gr, i) => {
+      h += `<div class="group">${i > 0 ? `<div class="ghead"><span>${esc(gr.label)}</span>${i>0 && gr.total!=null ? `<span class="num">${kfmt(gr.total)} kcal</span>` : ''}</div>` : ''}<ul class="items">${gr.items.map(itemHTML).join('')}</ul></div>`;
+    });
+    h += `</div></article>`;
+  }
+  v.innerHTML = h;
+}
+
+/* ---------- Ay ---------- */
+function renderMonth(){
+  const v = $('v-ay'), t = S.today, ms = months(), mi = ms.indexOf(S.month);
+  const [y, m] = S.month.split('-').map(Number), lead = (new Date(y, m-1, 1).getDay() + 6) % 7, n = new Date(y, m, 0).getDate();
+  const chev = dir => `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="${dir < 0 ? 'M10 3 5 8l5 5' : 'M6 3l5 5-5 5'}"/></svg>`;
+  let h = `<div class="card"><div class="cal-h"><button data-mo="-1" ${mi<=0?'disabled':''} aria-label="Önceki ay">${chev(-1)}</button><h2>${esc(monthName(S.month))}</h2><button data-mo="1" ${mi>=ms.length-1?'disabled':''} aria-label="Sonraki ay">${chev(1)}</button></div><div class="cal">`;
+  ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'].forEach(w => h += `<div class="wh">${w}</div>`);
+  for(let i = 0; i < lead; i++) h += '<div></div>';
+  for(let d = 1; d <= n; d++){
+    const k = ymd(y, m, d), day = S.data.days[k];
+    h += `<button data-k="${k}" class="num${k===t?' today':''}${k===S.sel?' sel':''}" ${day?'':'disabled'} aria-label="${fmt(k,{day:'numeric',month:'long',weekday:'long'})}">${d}</button>`;
+  }
+  h += `</div></div><p class="hint">Bir güne dokunarak o günün menüsünü aç.${ms.length>1?' Önceki aylara oklarla geçebilirsin.':''}</p>`;
+  v.innerHTML = h;
+}
+
+/* ---------- Ara ---------- */
+function renderSearchView(){
+  const res = `<div id="res" style="display:flex;flex-direction:column;gap:12px"></div>`;
+  // Geniş ekranda arama kutusu üst çubukta
+  if(WIDE.matches){ $('v-ara').innerHTML = res; renderResults(); return; }
+  $('v-ara').innerHTML = `<label class="search" for="q"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="7" cy="7" r="4.8"/><path d="m10.6 10.6 3.4 3.4"/></svg><input id="q" type="search" enterkeyhint="search" placeholder="Mantı, baklava, köfte…" autocomplete="off" value="${esc(S.q)}"></label><div id="res" style="display:flex;flex-direction:column;gap:12px"></div>`;
+  renderResults();
+}
+function renderResults(){
+  const box = $('res'); if(!box) return;
+  const q = fold(S.q.trim()), t = S.today;
+  const scope = S.pastInSearch ? 'Geçmiş günler de aranıyor.' : 'Sadece bugün ve sonrası aranıyor.';
+  const toggle = `<button data-past-toggle>${S.pastInSearch ? 'Geçmişi hariç tut' : 'Geçmişi de dahil et'}</button>`;
+  S.hits = null;
+  if(q.length < 2){ box.innerHTML = `<p class="hint">Yemeğin adını yaz, çıktığı günler listelensin. ${scope} ${toggle}</p>`; return; }
+  const groups = new Map();
+  for(const k of S.data.keys){
+    if(!S.pastInSearch && k < t) continue;
+    const day = S.data.days[k];
+    for(const m of S.data.meals){
+      const meal = day[m.key]; if(!meal) continue;
+      meal.groups.forEach(gr => gr.items.forEach(it => {
+        const f = fold(it.name);
+        if(!f.includes(q)) return;
+        if(!groups.has(f)) groups.set(f, {name: it.name, where: new Set(), dates: []});
+        const g = groups.get(f);
+        g.where.add(meal.groups.length > 1 && gr.label !== 'Menü' ? `${meal.label} · ${gr.label}` : meal.label);
+        if(!g.dates.includes(k)) g.dates.push(k);
+      }));
+    }
+  }
+  S.hits = groups.size;
+  if(!groups.size){ box.innerHTML = `<p class="hint">“${esc(S.q.trim())}” ${S.pastInSearch ? 'menülerde' : 'önümüzdeki günlerde'} yok. ${S.pastInSearch ? '' : toggle}</p>`; return; }
+  const next = g => g.dates.find(d => d >= t) || 'z' + g.dates[g.dates.length-1];
+  const list = [...groups.values()].sort((a,b) => next(a) < next(b) ? -1 : 1).slice(0, 60);
+  const hl = name => { const f = fold(name), i = f.indexOf(q); return i < 0 ? esc(name) : esc(name.slice(0,i)) + '<mark>' + esc(name.slice(i, i+q.length)) + '</mark>' + esc(name.slice(i+q.length)); };
+  const total = list.reduce((n,g) => n + g.dates.length, 0);
+  box.innerHTML = `<p class="hint">${list.length} yemek, ${total} gün. ${scope} ${toggle}</p><div class="groups">${list.map(g => `<div class="sg"><h3>${hl(g.name)}</h3><div class="meta">${esc([...g.where].join(', '))} · ${g.dates.length} kez</div><div class="dchips">${g.dates.map(d => `<button class="dchip num${d<t?' past':''}" data-k="${d}">${fmt(d,{day:'numeric',month:'short'})} ${fmt(d,{weekday:'short'})}</button>`).join('')}</div></div>`).join('')}</div>`;
+}
+
+/* ---------- Ayarlar ---------- */
+function renderSettings(){
+  const v = $('v-ayar'), d = S.data;
+  const segBtns = (attr, opts, cur) => opts.map(([k,l]) => `<button ${attr}="${k}" aria-pressed="${cur===k}">${l}</button>`).join('');
+  const theme = segBtns('data-theme-set', [['system','Sistem'],['light','Açık'],['dark','Koyu']], S.theme);
+  const size = segBtns('data-size-set', [['normal','Normal'],['big','Büyük']], S.big ? 'big' : 'normal');
+  const sec = (title, body) => `<div><p class="sec-t">${title}</p><div class="list">${body}</div></div>`;
+  const sw = (id, label, on, note = '') => `<label class="row" for="${id}"><span class="rl">${label}${note ? `<small>${note}</small>` : ''}</span><span class="sw"><input type="checkbox" id="${id}" ${on?'checked':''}><span></span></span></label>`;
+  const info = (label, value) => `<div class="row"><span class="rl">${label}</span><span class="rv">${esc(value)}</span></div>`;
+
+  let alg = `<details class="fold"><summary>Alerjen bilgisi${S.algOff.size?` · ${S.algOff.size} kapalı`:''}</summary><div class="list">`;
+  for(let i = 1; i <= 14; i++) alg += `<label class="row" for="alg${i}"><span class="rl">${esc(ALG[i])}</span><span class="sw"><input type="checkbox" id="alg${i}" data-alg="${i}" ${S.algOff.has(i)?'':'checked'}><span></span></span></label>`;
+  alg += `</div><p class="fine">Yemeğe dokununca hangi alerjenlerin gösterileceğini seç.</p></details>`;
+
+  const yr = String(new Date().getFullYear()), ms = months();
+  const msText = ms.map(mo => mo.startsWith(yr) ? cap(fmt(mo + '-01', {month:'long'})) : monthName(mo)).join(', ');
+  const upd = d.generatedAt ? new Date(d.generatedAt).toLocaleDateString('tr-TR', {day:'numeric', month:'long'}) : '';
+
+  const app = (!isStandalone() && isMobile() ? `<button class="row" id="showInstall"><span class="rl">Telefona kur<small>Ana ekrandan tek dokunuşla açılsın</small></span><span class="chev">›</span></button>` : '')
+    + `<button class="row" id="shareApp"><span class="rl">Arkadaşına gönder<small>Uygulamanın linkini paylaş</small></span><span class="chev">›</span></button>`;
+
+  v.innerHTML = `<div class="mclose"><b>Ayarlar</b><button id="setClose">Kapat</button></div>`
+    + sec('Görünüm',
+        `<div class="row"><span class="rl">Tema</span><div class="seg inl" role="group" aria-label="Tema">${theme}</div></div>`
+      + `<div class="row"><span class="rl">Yazı boyutu</span><div class="seg inl two" role="group" aria-label="Yazı boyutu">${size}</div></div>`)
+    + sec('Menü', sw('nextSw', 'Yemek saati geçtiyse sonraki öğünü göster', S.nextMeal) + sw('kcalSw', 'Kalorileri göster', S.kcal) + alg)
+    + sec('Arama', sw('pastSw', 'Geçmiş günleri aramaya dahil et', S.pastInSearch, 'Kapalıyken sadece bugün ve sonrası listelenir'))
+    + sec('Uygulama', app)
+    + `<div><p class="sec-t">Hakkında</p><div class="list">`
+      + info('Mevcut menüler', msText)
+      + (upd ? info('Son güncelleme', upd) : '')
+      + `<div class="row"><span class="rl">Sürüm</span><span class="rv ver">${esc(versionLabel())}<button id="updBtn" aria-label="Güncellemeleri denetle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button></span></div>`
+      + `<a class="row" id="ghLink" href="${GITHUB}" target="_blank" rel="noopener"><span class="rl">GitHub sayfası<small>Uygulama hakkında bilgi ve kurulum rehberi</small></span><span class="chev">↗</span></a>`
+    + `</div><p class="fine">Yeni ayın menüsü yurt paylaşınca kendiliğinden eklenir.</p></div>`;
+}
+function shareApp(){
+  const text = 'Yurt menüsü: bugünün kahvaltısı ve akşam yemeği';
+  const copy = () => navigator.clipboard ? navigator.clipboard.writeText(SITE).then(() => toast('Link kopyalandı'), () => toast(SITE)) : toast(SITE);
+  if(navigator.share) navigator.share({title: 'Yurt Menüsü', text, url: SITE}).catch(err => { if(err && err.name !== 'AbortError') copy(); });
+  else copy();
+}
+
+// Geniş ekranda takvim hep sağda, ayarlar ortada açılan pencere; "ay" ve "ayar" sekmesi ayrıca yok.
+function render(){
+  const wide = WIDE.matches;
+  if(wide && S.tab === 'ay') S.tab = 'gun';
+  if(wide && S.tab === 'ayar'){ S.tab = 'gun'; S.setOpen = true; }
+  if(!wide) S.setOpen = false;
+  renderHeader();
+  $('v-gun').hidden = S.tab !== 'gun';
+  $('v-ara').hidden = S.tab !== 'ara';
+  $('v-ay').hidden = !wide && S.tab !== 'ay';
+  $('v-ayar').hidden = wide ? !S.setOpen : S.tab !== 'ayar';
+  $('modalBg').hidden = !S.setOpen;
+  document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === S.tab));
+  if(S.tab === 'gun') renderDay(); else if(S.tab === 'ay') renderMonth(); else if(S.tab === 'ara') renderSearchView(); else renderSettings();
+  if(wide){ renderMonth(); if(S.setOpen) renderSettings(); }
+}
+function closeSettings(){
+  if(!S.setOpen) return;
+  S.setOpen = false; $('v-ayar').hidden = true; $('modalBg').hidden = true;
+  settleNextMeal();
+}
+
+/* ---------- paylaşım görseli ---------- */
+const FF = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+const FD = 'ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+// Görsel uygulamanın o anki renkleriyle çizilir: koyu temada koyu çıkar.
+function sharePalette(){
+  const cs = getComputedStyle(document.documentElement), v = n => cs.getPropertyValue(n).trim();
+  const meal = p => ({bg: v(`--${p}-bg`), fg: v(`--${p}-fg`)});
+  return {bg: v('--bg'), card: v('--surface'), fg: v('--fg'), muted: v('--muted'), hair: v('--hair'), meal: {kahvalti: meal('bf'), aksam: meal('dn')}};
+}
+function wrapLines(ctx, text, maxW){
+  const words = text.split(' '), lines = [];
+  let cur = '';
+  for(const w of words){
+    const test = cur ? cur + ' ' + w : w;
+    if(ctx.measureText(test).width <= maxW || !cur) cur = test; else { lines.push(cur); cur = w; }
+  }
+  if(cur) lines.push(cur);
+  return lines;
+}
+// Uygulamadaki kartın büyütülmüş hâli (1080 px genişlik ≈ ekrandaki kartın 2,25 katı).
+// mealKeys: paylaşılacak öğünler (['kahvalti'], ['aksam'] ya da ikisi).
+function drawShare(ctx, k, mealKeys, C, draw){
+  const W = 1080, P = 56, PX = 36, day = S.data.days[k];
+  const cardX = P, cardW = W - 2*P;
+  let y = P + 8;
+  const text = (s, x, yy, font, color, align = 'left') => { if(!draw) return; ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'alphabetic'; ctx.fillText(s, x, yy); };
+  const width = (s, font) => { ctx.font = font; return ctx.measureText(s).width; };
+  const line = (x1, x2, yy) => { if(draw){ ctx.fillStyle = C.hair; ctx.fillRect(x1, yy, x2 - x1, 2); } };
+  // "145" kalın + " kcal" soluk, sağa yaslı; kapladığı genişliği döndürür
+  const kcal = (n, right, base, numFont, unitFont, numColor) => {
+    const u = ' kcal', uw = width(u, unitFont), nw = width(kfmt(n), numFont);
+    text(u, right, base, unitFont, C.muted, 'right');
+    text(kfmt(n), right - uw, base, numFont, numColor, 'right');
+    return nw + uw;
+  };
+  if(draw){ ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, ctx.canvas.height); }
+  text(fmt(k, {day:'numeric', month:'long', year:'numeric'}), P + 4, y + 28, `600 29px ${FF}`, C.muted);
+  y += 40;
+  text(cap(fmt(k, {weekday:'long'})), P, y + 66, `700 72px ${FD}`, C.fg);
+  y += 102;
+  const NAME = `500 36px ${FF}`, NUM = `600 34px ${FF}`, UNIT = `500 27px ${FF}`, LH = 46;
+  for(const key of mealKeys){
+    const meal = day[key]; if(!meal) continue;
+    const top = y, MC = C.meal[key] || {bg: C.card, fg: C.fg}, STRIP = 112;
+    // önce yüksekliği ölç (draw=false), sonra kartı ve içini çiz
+    const body = (on) => {
+      const was = draw; draw = on; let yy = top;
+      text(meal.label, cardX + PX, yy + 74, `700 45px ${FD}`, MC.fg);
+      if(S.kcal && meal.groups[0].total != null) kcal(meal.groups[0].total, cardX + cardW - PX, yy + 72, `700 38px ${FF}`, `600 32px ${FF}`, MC.fg);
+      yy += STRIP + 4;
+      meal.groups.forEach((gr, gi) => {
+        if(gi > 0){
+          yy += 10; line(cardX + PX, cardX + cardW - PX, yy); yy += 18;
+          text(gr.label.toLocaleUpperCase('tr-TR'), cardX + PX, yy + 34, `700 26px ${FF}`, MC.fg);
+          if(S.kcal && gr.total != null) text(`${kfmt(gr.total)} KCAL`, cardX + cardW - PX, yy + 34, `700 26px ${FF}`, MC.fg, 'right');
+          yy += 52;
+        }
+        gr.items.forEach((it, ii) => {
+          if(ii > 0) line(cardX + PX, cardX + cardW, yy);
+          const kw = S.kcal && it.kcal != null ? width(kfmt(it.kcal), NUM) + width(' kcal', UNIT) : 0;
+          ctx.font = NAME;
+          const lines = wrapLines(ctx, it.name, cardW - PX*2 - kw - 28);
+          lines.forEach((ln, li) => text(ln, cardX + PX, yy + 52 + li*LH, NAME, C.fg));
+          if(S.kcal && it.kcal != null) kcal(it.kcal, cardX + cardW - PX, yy + 52, NUM, UNIT, C.fg);
+          yy += lines.length * LH + 34;
+        });
+      });
+      draw = was;
+      return yy + 14 - top;
+    };
+    const h = body(false);
+    if(draw){
+      ctx.save();
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(cardX, top, cardW, h, 40) : ctx.rect(cardX, top, cardW, h);
+      ctx.fillStyle = C.card; ctx.fill(); ctx.clip();
+      ctx.fillStyle = MC.bg; ctx.fillRect(cardX, top, cardW, STRIP); // öğün rengindeki başlık şeridi
+      ctx.restore();
+    }
+    body(draw);
+    y += h + 36;
+  }
+  return y - 36 + P;
+}
+function buildShareCanvas(k, mealKeys){
+  const c = document.createElement('canvas'), C = sharePalette();
+  c.width = 1080; c.height = 10;
+  c.height = Math.ceil(drawShare(c.getContext('2d'), k, mealKeys, C, false));
+  drawShare(c.getContext('2d'), k, mealKeys, C, true);
+  return c;
+}
+function dataUrlToBlob(url){
+  const [head, b64] = url.split(','), bin = atob(b64), arr = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], {type: head.match(/:(.*?);/)[1]});
+}
+// Paylaş düğmesi: önce hangi öğünün paylaşılacağı sorulur (gün tek öğünlüyse sorulmaz).
+function shareDay(){
+  const day = S.data.days[S.sel], has = S.data.meals.filter(m => day[m.key]);
+  if(has.length < 2){ shareMeals(has.map(m => m.key)); return; }
+  const s = $('sheet'), opt = (keys, label) => `<button data-share="${keys}">${esc(label)}</button>`;
+  s.innerHTML = `<div class="pick" role="dialog" aria-label="Paylaşılacak öğün"><b>Neyi paylaşmak istersin?</b>${has.map(m => opt(m.key, day[m.key].label)).join('')}${opt(has.map(m => m.key).join(','), 'İkisi birden')}<button class="cancel" id="sheetClose">Vazgeç</button></div>`;
+  openSheet('.pick');
+}
+function shareMeals(keys){
+  const k = S.sel, url = buildShareCanvas(k, keys).toDataURL('image/png');
+  const name = `yurt-menu-${k}${keys.length === 1 ? '-' + keys[0] : ''}.png`;
+  const file = new File([dataUrlToBlob(url)], name, {type: 'image/png'});
+  if(navigator.canShare && navigator.canShare({files: [file]})){
+    $('sheet').hidden = true;
+    navigator.share({files: [file]}).catch(err => { if(err && err.name !== 'AbortError') showSheet(url, k, name); });
+  } else showSheet(url, k, name);
+}
+function showSheet(url, k, name){
+  const s = $('sheet'), wasOpen = !s.hidden;
+  s.innerHTML = `<img src="${url}" alt="${esc(fmt(k,{day:'numeric',month:'long'}))} menüsü"><p>Kaydetmek için görsele basılı tut.</p><div class="row2"><a href="${url}" download="${name}">İndir</a><button id="sheetClose">Kapat</button></div>`;
+  openSheet('img', wasOpen);
+}
+function openSheet(inner, keepBg){
+  const s = $('sheet');
+  s.hidden = false;
+  stopAnims(s);
+  if(!keepBg) anim(s, [{opacity: 0}, {opacity: 1}], {duration: 200});
+  anim(s.querySelector(inner), [{opacity: 0, transform: 'scale(.94)'}, {opacity: 1, transform: 'none'}], {duration: 280});
+}
+function closeSheet(){
+  const s = $('sheet'); if(s.hidden) return;
+  stopAnims(s);
+  const a = anim(s, [{opacity: 1}, {opacity: 0}], {duration: 150, easing: 'ease-in'});
+  if(!a){ s.hidden = true; return; }
+  a.finished.then(() => { s.hidden = true; }, () => {});
+}
+
+/* ---------- kurulum kartı ---------- */
+const UA = navigator.userAgent;
+const isIOS = () => /iPhone|iPad|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isAndroid = () => /Android/.test(UA);
+const isMobile = () => isIOS() || isAndroid();
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isInApp = () => /FBAN|FBAV|FB_IAB|Instagram|WhatsApp|Line\/|Twitter|TikTok|musical_ly|Snapchat|LinkedInApp|Telegram|GSA\/|; wv\)/.test(UA);
+let installEvt = null;
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; if(!$('install').hidden) renderInstall(); });
+addEventListener('appinstalled', () => { say('kurulum/kuruldu'); store.set('installSeen', true); hideAnimated($('install')); });
+
+const SHARE_ICON = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Paylaş simgesi"><path d="M10 12.5V2.5M6.5 6 10 2.5 13.5 6"/><path d="M6.5 9H5a1.5 1.5 0 0 0-1.5 1.5v6A1.5 1.5 0 0 0 5 18h10a1.5 1.5 0 0 0 1.5-1.5v-6A1.5 1.5 0 0 0 15 9h-1.5"/></svg>`;
+function renderInstall(){
+  const box = $('install');
+  let steps = '', action = '';
+  if(isInApp()){
+    if(isAndroid()){
+      const intent = `intent://${location.host}${location.pathname}#Intent;scheme=https;end`;
+      steps = `<ol><li>Telefona kurmak için önce sayfayı tarayıcıda aç.</li></ol>`;
+      action = `<a class="go" href="${esc(intent)}">Tarayıcıda aç</a>`;
+    } else {
+      steps = `<ol><li>Sağ üstteki <b>⋯</b> ya da paylaş menüsüne bas.</li><li><b>Tarayıcıda aç</b>'ı seç.</li><li>Açılan sayfada bu kart kurulumu gösterecek.</li></ol>`;
+    }
+  } else if(isIOS()){
+    steps = `<ol><li>Tarayıcıdaki ${SHARE_ICON} <b>Paylaş</b> düğmesine bas.</li><li><b>Ana Ekrana Ekle</b>'yi seç.</li></ol>`;
+  } else if(installEvt){
+    steps = `<ol><li>Tek dokunuşla ana ekrana eklenir, internetsiz de açılır.</li></ol>`;
+    action = `<button class="go" id="doInstall">Yükle</button>`;
+  } else {
+    steps = `<ol><li>Tarayıcının <b>⋮</b> menüsünü aç.</li><li><b>Ana ekrana ekle</b> ya da <b>Uygulamayı yükle</b>'yi seç.</li></ol>`;
+  }
+  const wasHidden = box.hidden;
+  if(wasHidden) say('kurulum/oneri/' + (isInApp() ? 'uygulama-ici' : isIOS() ? 'ios' : installEvt ? 'android' : 'android-menu'));
+  box.innerHTML = `<div class="inst"><div class="inst-h"><img src="icons/icon-180.png" alt=""><div><b>Yurt Menü'yü telefonuna ekle</b><span>Ana ekrandan bir uygulama gibi açılır.</span></div></div>${steps}<div class="inst-a"><button class="later" id="installLater">Şimdilik geç</button>${action}</div></div>`;
+  box.hidden = false;
+  if(wasHidden) rise(box);
+}
+function maybeShowInstall(force){
+  if(isStandalone() || !isMobile()) return;
+  if(!force && store.get('installSeen')) return;
+  renderInstall();
+}
+
+/* ---------- güncelleme ---------- */
+// Bildirim yok: yeni sürüm arka planda iner, uygulama arka plana alınınca (ya da açılışın ilk anında,
+// kullanıcı henüz dokunmadıysa) devreye girer. Ayarlardaki yenile tuşu hemen denetler ve kurar.
+let waitingWorker = null, applying = false, touched = false, swReg = null;
+const OPENED = performance.now();
+addEventListener('pointerdown', () => { touched = true; }, {capture: true, passive: true});
+function applyUpdate(how){
+  if(applying || !waitingWorker) return;
+  applying = true; say('guncelleme/' + how);
+  waitingWorker.postMessage('SKIP_WAITING');
+}
+function gotUpdate(w){
+  waitingWorker = w;
+  if(document.visibilityState === 'hidden' || (!touched && performance.now() - OPENED < 5000)) applyUpdate('sessiz');
+}
+if('serviceWorker' in navigator && location.protocol !== 'file:'){
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    swReg = reg;
+    // Yeni sürüm olayı kaçmış olabilir (tarayıcı sayfa dinlemeye başlamadan indirdiyse, ya da sayfa arka plandayken):
+    // bu yüzden olaya güvenmek yerine her fırsatta bekleyen / kurulan sürüme bak.
+    const tracked = new WeakSet();
+    const check = () => {
+      if(!navigator.serviceWorker.controller) return;
+      if(reg.waiting) gotUpdate(reg.waiting);
+      const w = reg.installing;
+      if(w && !tracked.has(w)){
+        tracked.add(w);
+        w.addEventListener('statechange', () => { if(w.state === 'installed') gotUpdate(w); });
+      }
+    };
+    check();
+    reg.addEventListener('updatefound', check);
+    const recheck = () => { check(); reg.update().then(check, () => {}); };
+    document.addEventListener('visibilitychange', () => {
+      if(document.visibilityState === 'visible') recheck();
+      else if(waitingWorker) applyUpdate('sessiz'); // kullanıcı uygulamadan çıktı: dönünce yeni sürüm açık olsun
+    });
+    window.addEventListener('pageshow', e => { if(e.persisted) recheck(); });
+  }).catch(() => {});
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if(reloading || !applying) return; reloading = true; location.reload(); });
+}
+// Ayarlardaki yenile tuşu: sunucuda yeni sürüm var mı bak, varsa hemen kur ve yeniden aç.
+let checking = false;
+function manualUpdate(btn){
+  if(checking || applying) return;
+  say('guncelleme/denetle');
+  if(!swReg){ location.reload(); return; }
+  checking = true; btn.classList.add('spin');
+  const done = msg => { checking = false; btn.classList.remove('spin'); if(msg) toast(msg); };
+  const timer = setTimeout(() => done('Denetlenemedi, biraz sonra tekrar dene'), 20000);
+  swReg.update().then(() => {
+    const w = swReg.waiting || swReg.installing;
+    if(!w){ clearTimeout(timer); done('En son sürümü kullanıyorsun'); return; }
+    const go = () => { clearTimeout(timer); waitingWorker = w; toast('Güncelleniyor…'); applyUpdate('elle'); };
+    if(w.state === 'installed') go();
+    else w.addEventListener('statechange', () => { if(w.state === 'installed') go(); else if(w.state === 'redundant'){ clearTimeout(timer); done('Güncellenemedi, biraz sonra tekrar dene'); } });
+  }, () => { clearTimeout(timer); done('İnternet yok, denetlenemedi'); });
+}
+
+/* ---------- etkileşim ---------- */
+let toastT;
+function toast(msg){ const el = $('toast'); el.textContent = msg; if(el.hidden){ el.hidden = false; rise(el, 'translateX(-50%)'); } clearTimeout(toastT); toastT = setTimeout(() => hideAnimated(el, 'translateX(-50%)'), 2800); }
+// Gün değişimi: menü yönüne göre kayarak gelir; yeni gün şeritte görünüyorsa seçim dairesi ona kayar, görünmüyorsa şerit o güne kayar.
+function changeDay(k){
+  const prev = S.sel; if(!k || k === prev) return;
+  const dir = k > prev ? 1 : -1, wk = $('week'), v = $('v-gun');
+  const oldDn = wk.querySelector('.day.sel .dn'), oldR = oldDn && oldDn.getBoundingClientRect();
+  const oldCs = oldDn && getComputedStyle(oldDn), oldBg = oldCs && oldCs.backgroundColor, oldFg = oldCs && oldCs.color;
+  const wasVis = dayVisible(k);
+  S.sel = k; S.month = k.slice(0,7);
+  weekReveal = 'smooth'; render(); weekReveal = 'instant';
+  stopAnims(v); v.style.transform = '';
+  scrollForDay();
+  anim(v, [{opacity: 0, transform: `translateX(${dir * 48}px)`}, {opacity: 1, transform: 'none'}], {duration: 260});
+  if(REDUCED.matches) return;
+  if(oldR && wasVis) moveWeekSel(prev, oldR, oldBg, oldFg);
+}
+function moveWeekSel(prevKey, oldR, oldBg, oldFg){
+  const wk = $('week'), tr = $('wtrack'), day = tr && tr.querySelector('.day.sel'), dn = day && day.querySelector('.dn'); if(!dn) return;
+  const wr = tr.getBoundingClientRect(), r = dn.getBoundingClientRect(), cs = getComputedStyle(dn), bg = cs.backgroundColor, fg = cs.color;
+  if(Math.abs(oldR.left - r.left) > wr.width) return; // eski gün çok uzaktaysa daire uçmasın
+  day.classList.remove('sel'); const fgBefore = getComputedStyle(dn).color; day.classList.add('sel');
+  const g = document.createElement('i'); g.className = 'wghost';
+  Object.assign(g.style, {left: r.left - wr.left + tr.scrollLeft + 'px', top: r.top - wr.top + 'px', width: r.width + 'px', height: r.height + 'px', background: bg});
+  tr.prepend(g); wk.classList.add('ghosting');
+  const o = {duration: 280};
+  const a = anim(g, [{transform: `translateX(${oldR.left - r.left}px)`, background: oldBg}, {transform: 'none', background: bg}], o);
+  // Rakamın rengi daireyle birlikte değişsin: yeni gün daire varınca koyulaşır, eski gün daire ayrılınca açılır.
+  anim(dn, [{color: fgBefore}, {color: fgBefore, offset: .5}, {color: fg}], o);
+  const old = wk.querySelector(`.day[data-k="${prevKey}"] .dn`);
+  if(old){ const c = getComputedStyle(old).color; anim(old, [{color: oldFg}, {color: oldFg, offset: .4}, {color: c}], o); }
+  const done = () => { if(g.isConnected){ g.remove(); wk.classList.remove('ghosting'); } };
+  if(a) a.finished.then(done, done); else done();
+}
+// "Sonraki öğünü göster" açıkken: bugünün kahvaltısı bittiyse akşam yemeğine inilir,
+// akşam yemeği de bittiyse yarının (kahvaltısı) açılır. Başka günler en üstten başlar.
+const breakfastOver = () => new Date().getHours() >= breakfastEnd(S.today);
+function autoDay(){
+  const t = S.today, tm = addDays(t, 1);
+  if(S.nextMeal && S.data.days[t] && S.data.days[tm] && new Date().getHours() >= DINNER_END) return tm;
+  return nearestKey(t);
+}
+// Saati takip eden görünümü (ilk açılış, gece yarısı, ayar değişince) şimdiki öğüne getirir.
+function followNow(){
+  S.follow = true;
+  const k = autoDay();
+  if(k === S.sel) return false;
+  if(S.tab === 'gun' && S.data.days[S.sel]) changeDay(k);
+  else { S.sel = k; S.month = k.slice(0,7); render(); }
+  return true;
+}
+// Ayar değiştiyse Ayarlar kapanınca uygulanır (açıkken arkadaki sayfa kaymasın)
+let nextMealDirty = false;
+function settleNextMeal(){
+  if(!nextMealDirty || S.tab !== 'gun' || S.setOpen) return;
+  nextMealDirty = false;
+  if(S.follow || S.sel === S.today){ if(!followNow()) scrollForDay(true); }
+}
+let autoDinner = false; // son kararda akşam kartına inilmiş miydi
+function scrollForDay(smooth){
+  if(S.tab !== 'gun') return;
+  const card = $('v-gun').querySelector('.meal[data-meal="aksam"]');
+  autoDinner = S.nextMeal && S.sel === S.today && breakfastOver();
+  if(WIDE.matches){ window.scrollTo({top: 0}); return; } // geniş ekranda her şey zaten görünüyor
+  const top = autoDinner && card ? card.getBoundingClientRect().top + scrollY - document.querySelector('.top').offsetHeight - 12 : 0;
+  window.scrollTo({top: Math.max(0, top), behavior: smooth ? 'smooth' : 'instant'});
+}
+function switchTab(t){
+  const changed = S.tab !== t;
+  S.tab = t; if(t === 'ay') S.month = S.sel.slice(0,7);
+  stopAnims($('v-gun')); $('v-gun').style.transform = '';
+  render();
+  if(changed) anim($('v-'+t), [{opacity: 0, transform: 'translateY(6px)'}, {opacity: 1, transform: 'none'}], {duration: 200});
+}
+function go(k){
+  const t = nearestKey(k);
+  S.follow = false;
+  if(WIDE.matches && S.q){ S.q = ''; $('hq').value = ''; } // aramadan bir güne geçince menü geri gelir
+  if(S.tab === 'gun') changeDay(t); else { S.sel = t; S.month = t.slice(0,7); switchTab('gun'); }
+  scrollForDay();
+}
+function neighbor(dir){ const ks = S.data.keys; return ks[ks.indexOf(S.sel) + dir]; }
+function step(n){
+  const ks = S.data.keys, i = ks.indexOf(S.sel), j = Math.max(0, Math.min(ks.length-1, i + n));
+  if(j !== i){ S.follow = false; changeDay(ks[j]); }
+}
+function toggleAlg(d){
+  stopAnims(d);
+  if(d.hidden || d.dataset.closing){
+    delete d.dataset.closing; d.hidden = false;
+    const h = d.offsetHeight;
+    anim(d, [{height: '0px', opacity: 0, marginTop: '0px'}, {height: h + 'px', opacity: 1, marginTop: '3px'}], {duration: 200});
+  } else {
+    const h = d.offsetHeight; d.dataset.closing = '1';
+    const a = anim(d, [{height: h + 'px', opacity: 1, marginTop: '3px'}, {height: '0px', opacity: 0, marginTop: '0px'}], {duration: 160, easing: 'ease-in'});
+    const end = () => { delete d.dataset.closing; d.hidden = true; };
+    if(a) a.finished.then(end, () => {}); else end();
+  }
+}
+document.addEventListener('click', e => {
+  if(e.target.closest('#installLater')){ say('kurulum/sonra'); store.set('installSeen', true); hideAnimated($('install')); return; }
+  if(e.target.closest('#doInstall') && installEvt){ say('kurulum/yukle'); installEvt.prompt(); installEvt.userChoice.then(c => say(c && c.outcome === 'accepted' ? 'kurulum/kabul' : 'kurulum/ret'), () => {}).finally(() => { installEvt = null; store.set('installSeen', true); hideAnimated($('install')); }); return; }
+  if(e.target.closest('.inst .go')){ say('kurulum/tarayicida-ac'); store.set('installSeen', true); return; }
+  const ub = e.target.closest('#updBtn');
+  if(ub){ manualUpdate(ub); return; }
+  if(!S.data) return;
+  const tab = e.target.closest('.tab');
+  if(tab){ say('bolum/' + tab.dataset.tab); switchTab(tab.dataset.tab); if(S.tab === 'gun'){ scrollForDay(); settleNextMeal(); } else window.scrollTo({top:0}); return; }
+  const wk = e.target.closest('[data-wk]');
+  if(wk){ if(!wk.disabled) weekNudge(+wk.dataset.wk); return; }
+  const mo = e.target.closest('[data-mo]');
+  if(mo && !mo.disabled){ const ms = months(); S.month = ms[ms.indexOf(S.month) + +mo.dataset.mo] || S.month; render(); return; }
+  const ds = e.target.closest('[data-step]');
+  if(ds && !ds.disabled){ const n = neighbor(+ds.dataset.step); if(n) go(n); return; }
+  if(e.target.closest('#setBtn')){
+    say('bolum/ayar');
+    S.setOpen = true; render();
+    anim($('v-ayar'), [{opacity: 0, transform: 'translate(-50%,-48%)'}, {opacity: 1, transform: 'translate(-50%,-50%)'}], {duration: 220});
+    return;
+  }
+  if(e.target.closest('#setClose')){ if(S.setOpen) closeSettings(); else { switchTab('gun'); scrollForDay(); settleNextMeal(); } return; }
+  if(e.target.id === 'modalBg'){ closeSettings(); return; }
+  const dk = e.target.closest('[data-k]');
+  if(dk && !dk.disabled){ go(dk.dataset.k); return; }
+  if(e.target.closest('#todayBtn')){ go(S.today); return; }
+  if(e.target.closest('#shareBtn')){ say('paylas/gun-dugmesi'); shareDay(); return; }
+  const sh = e.target.closest('[data-share]');
+  if(sh){ say('paylas/' + sh.dataset.share.split(',').join('+')); shareMeals(sh.dataset.share.split(',')); return; }
+  if(e.target.closest('#showInstall')){ say('kurulum/ayarlardan'); maybeShowInstall(true); return; }
+  if(e.target.closest('#sheetClose') || e.target.id === 'sheet'){ closeSheet(); return; }
+  const th = e.target.closest('[data-theme-set]');
+  if(th){ say('tema/' + {system:'sistem', light:'acik', dark:'koyu'}[th.dataset.themeSet]); S.theme = th.dataset.themeSet; store.set('theme', S.theme); applyTheme(); renderSettings(); return; }
+  const sz = e.target.closest('[data-size-set]');
+  if(sz){ S.big = sz.dataset.sizeSet === 'big'; say('ayar/yazi/' + (S.big ? 'buyuk' : 'normal')); store.set('bigText', S.big); applyPrefs(); renderSettings(); return; }
+  if(e.target.closest('#shareApp')){ say('paylas/uygulama'); shareApp(); return; }
+  if(e.target.closest('#ghLink')){ say('hakkinda/github'); return; }
+  if(e.target.closest('[data-past-toggle]')){ S.pastInSearch = !S.pastInSearch; say('ayar/gecmis-arama/' + (S.pastInSearch ? 'ac' : 'kapat')); store.set('pastInSearch', S.pastInSearch); renderHeader(); renderResults(); return; }
+  if(e.target.closest('a.gq')) return;
+  const ti = e.target.closest('.item.tap');
+  if(ti) toggleAlg(ti.querySelector('.alg-d'));
+});
+// Aranan kelime: yazma 1,5 sn durunca bir kez sayılır (her harfte değil)
+let searchT; const searched = new Set();
+function countSearch(){
+  clearTimeout(searchT);
+  searchT = setTimeout(() => {
+    const w = fold(S.q.trim()).replace(/\s+/g, ' ').slice(0, 40);
+    if(w.length < 3 || searched.has(w)) return;
+    searched.add(w);
+    say((S.hits === 0 ? 'arama-sonucsuz/' : 'arama/') + w);
+  }, 1500);
+}
+document.addEventListener('input', e => {
+  if(e.target.id === 'q' || e.target.id === 'hq') countSearch();
+  if(e.target.id === 'q'){ S.q = e.target.value; renderResults(); }
+  if(e.target.id === 'hq' && S.data){
+    // Üstteki kutu: yazınca sonuçlar menünün yerine gelir, boşalınca menü geri döner
+    S.q = e.target.value;
+    const want = S.q.trim() ? 'ara' : 'gun';
+    if(S.tab !== want){ S.tab = want; render(); } else if(want === 'ara') renderResults();
+  }
+});
+// Büyük ekranda (ör. 1920×1080) düzen orantılı büyür ki ekranın üst yarısında küçük kalmasın.
+// Büyütme ekran yüksekliğine göre (550 px: ayın en uzun günü de kaydırmadan sığar), en fazla 1,25 kat (daha fazlası iri duruyor).
+function fitWide(){
+  const z = WIDE.matches ? Math.max(1, Math.min(innerHeight / 550, innerWidth / 1180, 1.25)) : 1;
+  const w = WIDE.matches ? Math.min(1240, Math.floor(innerWidth / z)) + 'px' : '';
+  document.documentElement.style.setProperty('--z', z); // ayarlar penceresi büyütülmüş alanın içinde: boyu ekrana sığsın diye
+  document.querySelectorAll('.top .wrap, main > .wrap').forEach(el => { el.style.zoom = z === 1 ? '' : z.toFixed(3); el.style.maxWidth = w; });
+}
+addEventListener('resize', fitWide);
+fitWide();
+WIDE.addEventListener('change', () => {
+  fitWide();
+  if(!S.data) return;
+  if(!WIDE.matches && S.setOpen){ S.setOpen = false; S.tab = 'ayar'; }
+  render();
+});
+document.addEventListener('change', e => {
+  const a = e.target.dataset && e.target.dataset.alg;
+  if(a){ say('alerjen/' + fold(ALG[a]).replace(/\s+/g, '-') + '/' + (e.target.checked ? 'ac' : 'kapat')); e.target.checked ? S.algOff.delete(+a) : S.algOff.add(+a); store.set('algHidden', [...S.algOff]);
+    const sm = e.target.closest('details').querySelector('summary'); sm.textContent = 'Alerjen bilgisi' + (S.algOff.size ? ` · ${S.algOff.size} kapalı` : '');
+    if(S.tab === 'gun') renderDay(); return; }
+  if(e.target.id === 'nextSw'){ S.nextMeal = e.target.checked; say('ayar/sonraki-ogun/' + (S.nextMeal ? 'ac' : 'kapat')); store.set('nextMeal', S.nextMeal); nextMealDirty = true; return; }
+  if(e.target.id === 'kcalSw'){ S.kcal = e.target.checked; say('ayar/kalori/' + (S.kcal ? 'ac' : 'kapat')); store.set('kcal', S.kcal); applyPrefs(); return; }
+  if(e.target.id === 'pastSw'){ say('ayar/gecmis-arama/' + (e.target.checked ? 'ac' : 'kapat')); S.pastInSearch = e.target.checked; store.set('pastInSearch', S.pastInSearch); renderResults(); return; }
+});
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){ closeSheet(); closeSettings(); }
+  if(S.tab !== 'gun' || e.target.tagName === 'INPUT' || !S.data) return;
+  if(e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  // Basılı tutunca günler saniyede en fazla üç kez değişsin (tarayıcının kendi tekrarı çok hızlı)
+  const now = performance.now();
+  if(e.repeat && now - lastArrow < 330){ e.preventDefault(); return; }
+  lastArrow = now;
+  step(e.key === 'ArrowRight' ? 1 : -1);
+});
+let lastArrow = 0;
+// Kaydırma: menü parmağı takip eder; yeterince kaydırılınca sonraki/önceki gün gelir, yoksa geri yaylanır.
+// Önce hareketin yönü kilitlenir: aşağı-yukarı kaydırırken menü yana kaymaz.
+let tx = null, ty = null, lock = null, drag = 0;
+const mainEl = document.querySelector('main');
+mainEl.addEventListener('touchstart', e => {
+  if(S.tab !== 'gun' || !S.data || e.touches.length > 1){ tx = null; return; }
+  tx = e.touches[0].clientX; ty = e.touches[0].clientY; lock = null; drag = 0;
+  const v = $('v-gun'); stopAnims(v); v.style.transform = '';
+}, {passive:true});
+mainEl.addEventListener('touchmove', e => {
+  if(tx == null) return;
+  const dx = e.touches[0].clientX - tx, dy = e.touches[0].clientY - ty;
+  if(!lock){ if(Math.abs(dx) < 8 && Math.abs(dy) < 8) return; lock = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'; }
+  if(lock !== 'x') return;
+  drag = neighbor(dx < 0 ? 1 : -1) ? dx : dx * 0.3;
+  if(!REDUCED.matches) $('v-gun').style.transform = `translateX(${drag}px)`;
+}, {passive:true});
+function endSwipe(e, cancelled){
+  if(tx == null) return;
+  const dx = cancelled ? 0 : e.changedTouches[0].clientX - tx; tx = null;
+  if(lock !== 'x') return;
+  const v = $('v-gun'), dir = dx < 0 ? 1 : -1, k = neighbor(dir);
+  v.style.transform = '';
+  if(Math.abs(dx) > 60 && k){
+    const a = anim(v, [{transform: `translateX(${drag}px)`, opacity: 1}, {transform: `translateX(${-dir * v.offsetWidth * 0.5}px)`, opacity: 0}], {duration: 140, easing: 'ease-in', fill: 'forwards'});
+    let done = false; const from = S.sel;
+    // Bu arada başka bir yolla gün değiştiyse (ok, dokunuş) eski kaydırma onu geri almasın
+    const commit = () => { if(done) return; done = true; if(S.sel === from && S.tab === 'gun'){ S.follow = false; changeDay(k); } else v.style.transform = ''; };
+    if(a) a.finished.then(commit, commit); else commit();
+  } else if(drag){
+    anim(v, [{transform: `translateX(${drag}px)`}, {transform: 'none'}], {duration: 260, easing: 'cubic-bezier(.3,1.4,.5,1)'});
+  }
+}
+mainEl.addEventListener('touchend', e => endSwipe(e, false), {passive:true});
+mainEl.addEventListener('touchcancel', e => endSwipe(e, true), {passive:true});
+
+/* ---------- veri ve gün değişimi ---------- */
+async function loadData(){
+  const res = await fetch('data/menu.json', {cache: 'no-cache'});
+  if(!res.ok) throw new Error('veri yok');
+  const d = await res.json();
+  if(!d.keys || !d.keys.length) throw new Error('boş veri');
+  return d;
+}
+function applyData(d){
+  const first = !S.data;
+  S.data = d;
+  S.today = todayKey();
+  if(first || S.follow){ S.follow = true; S.sel = autoDay(); S.month = S.sel.slice(0,7); }
+  else if(!d.days[S.sel]){ S.sel = nearestKey(S.today); S.month = S.sel.slice(0,7); }
+  render();
+}
+// Gece yarısı ya da uygulama arka plandan dönünce: tarihi ve menüyü tazele
+function refresh(){
+  if(!S.data) return;
+  const now = todayKey();
+  if(now !== S.today){
+    const wasToday = S.follow || S.sel === S.today;
+    S.today = now;
+    if(wasToday){ S.follow = true; S.sel = autoDay(); S.month = S.sel.slice(0,7); }
+    render();
+    if(wasToday) scrollForDay();
+  } else if(S.follow && autoDay() !== S.sel){
+    // Uygulama akşamdan beri açık kaldı ve akşam yemeği bitti: yarına geç
+    followNow();
+  } else if(S.tab === 'gun' && S.sel === S.today && S.nextMeal && !autoDinner && breakfastOver() && scrollY < 4){
+    // Uygulama sabahtan beri açık kaldı ve kahvaltı bitti: kullanıcı kaydırmadıysa akşama in
+    scrollForDay(true);
+  }
+  loadData().then(d => { if(d.generatedAt !== S.data.generatedAt) applyData(d); }).catch(() => {});
+}
+function scheduleMidnight(){
+  const n = new Date(), next = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 0, 0, 5);
+  setTimeout(() => { refresh(); scheduleMidnight(); }, next - n);
+}
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') refresh(); });
+addEventListener('focus', refresh);
+
+async function boot(){
+  applyTheme(); applyPrefs();
+  try{
+    applyData(await loadData());
+    scrollForDay();
+    maybeShowInstall(false);
+  }catch(e){
+    $('v-gun').innerHTML = `<div class="notice">Menü yüklenemedi. İnternet bağlantını kontrol edip sayfayı yenile.</div>`;
+  }
+  scheduleMidnight();
+  say(isStandalone() ? '/acilis/uygulama' : '/acilis/tarayici', false, isStandalone() ? 'Açılış (ana ekrandaki uygulama)' : 'Açılış (tarayıcı)');
+}
+window.__menu = S;
+boot();
+})();
+</script>
+</body>
+</html>
